@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use clap::Parser;
 use quick_xml::Reader;
 use quick_xml::events::Event;
@@ -38,22 +39,30 @@ fn main() {
     xml_reader.config_mut().trim_text(true);
 
     let mut buf = Vec::new();
+    let mut key = String::new();
+    let mut retorno: HashMap<String, String> = HashMap::new() ;
 
     loop {
         match xml_reader.read_event_into(&mut buf) { // Usando read_event_into
             Ok(Event::Start(e)) => {
-                println!("Tag: {}", String::from_utf8_lossy(e.name().as_ref()));
-                for attr in e.attributes() {
-                    let attr = attr.unwrap();
-                    println!(
-                        "  Atributo: {} = {}",
-                        String::from_utf8_lossy(attr.key.as_ref()),
-                        String::from_utf8_lossy(&*attr.value)
-                    );
-                }
+                key = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                // println!("Tag: {}", key);
+                // for attr in e.attributes() {
+                //     let attr = attr.unwrap();
+                //     println!(
+                //         "  Atributo: {} = {}",
+                //         String::from_utf8_lossy(attr.key.as_ref()),
+                //         String::from_utf8_lossy(&*attr.value)
+                //     );
+                // }
             }
             Ok(Event::Text(e)) => {
-                println!("  Valor: {}", String::from_utf8_lossy(&e));
+                let value = String::from_utf8_lossy(&e).to_string();
+                // TODO: verificar se tem uso
+                if key != "X509Certificate" {
+                    retorno.insert(key.clone(), value.clone());
+                }
+                // println!("  Valor: {}", value);
             }
             Ok(Event::Eof) => break,
             Err(e) => panic!("Erro ao ler XML: {}", e),
@@ -61,5 +70,5 @@ fn main() {
         }
         buf.clear(); // Limpa o buffer para o próximo evento
     }
-
+    println!("{:#?}", retorno);
 }
